@@ -15,4 +15,5 @@ WITH (
     ROWTERMINATOR = '\n',
     TEXTQUALIFIER = '"',
     CODEPAGE = '65001'   -- UTF-8
+    TABLOCK
 );
