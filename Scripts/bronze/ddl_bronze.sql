@@ -11,6 +11,10 @@ Notes:         Drops existing tables and recreates them.
 -- ==============================================
 -- Bronze_Ingredients
 -- ==============================================
+IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'Bronze')
+    EXEC('CREATE SCHEMA Bronze');
+GO
+    
 IF OBJECT_ID('Bronze.Bronze_Ingredients', 'U') IS NOT NULL
     DROP TABLE Bronze.Bronze_Ingredients;
 GO
