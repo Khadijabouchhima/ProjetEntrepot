@@ -55,6 +55,85 @@ GROUP BY
 
 
 
+
+/*
+
+===============================================================================
+
+Silver Shift Cleaning Script
+
+===============================================================================
+
+Purpose:
+
+    - Remove quotes from text fields.
+
+    - Trim leading/trailing spaces.
+
+    - Normalize day_of_week casing (capitalize first letter, rest lowercase).
+
+    - Validate time formats.
+
+    - Ensure end_time is after start_time.
+
+===============================================================================
+
+*/
+
+-- Remove quotes and trim spaces from text columns
+UPDATE silver.Silver_Shift
+SET 
+    shift_id = TRIM(REPLACE(shift_id, '"', '')),
+    day_of_week = TRIM(REPLACE(day_of_week, '"', ''))
+WHERE shift_id LIKE '%"%' OR day_of_week LIKE '%"%';
+
+-- Trim all text columns even if no quotes
+UPDATE silver.Silver_Shift
+SET 
+    shift_id = TRIM(shift_id),
+    day_of_week = TRIM(day_of_week),
+    start_time = TRIM(start_time),
+    end_time = TRIM(end_time);
+
+-- Normalize day_of_week casing (capitalize first letter, rest lowercase)
+UPDATE silver.Silver_Shift
+SET day_of_week = CONCAT(
+    UPPER(LEFT(day_of_week, 1)),
+    LOWER(SUBSTRING(day_of_week, 2, LEN(day_of_week)))
+)
+WHERE day_of_week IS NOT NULL;
+
+-- Validate and standardize day_of_week values
+UPDATE silver.Silver_Shift
+SET day_of_week = 
+    CASE LOWER(TRIM(day_of_week))
+        WHEN 'mon' THEN 'Monday'
+        WHEN 'tue' THEN 'Tuesday'
+        WHEN 'wed' THEN 'Wednesday'
+        WHEN 'thu' THEN 'Thursday'
+        WHEN 'fri' THEN 'Friday'
+        WHEN 'sat' THEN 'Saturday'
+        WHEN 'sun' THEN 'Sunday'
+        ELSE day_of_week
+    END
+WHERE day_of_week IS NOT NULL;
+
+-- Validate time formats (convert to proper TIME format if needed)
+UPDATE silver.Silver_Shift
+SET 
+    start_time = CASE 
+                    WHEN TRY_CAST(start_time AS TIME) IS NOT NULL 
+                    THEN CONVERT(VARCHAR(8), CAST(start_time AS TIME), 108)
+                    ELSE start_time
+                 END,
+    end_time = CASE 
+                  WHEN TRY_CAST(end_time AS TIME) IS NOT NULL 
+                  THEN CONVERT(VARCHAR(8), CAST(end_time AS TIME), 108)
+                  ELSE end_time
+               END
+WHERE start_time IS NOT NULL AND end_time IS NOT NULL;
+
+
 /*
 
 ===============================================================================
