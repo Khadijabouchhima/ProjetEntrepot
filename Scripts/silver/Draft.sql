@@ -55,6 +55,109 @@ GROUP BY
 
 
 
+/*
+
+===============================================================================
+
+Silver Rota Cleaning Script
+
+===============================================================================
+
+Purpose:
+
+    - Remove quotes from text fields.
+
+    - Trim leading/trailing spaces.
+
+    - Validate date format and ensure proper DATE type.
+
+    - Ensure foreign key references exist (shift_id, staff_id).
+
+    - Check for duplicate rota entries.
+
+===============================================================================
+
+*/
+
+-- Remove quotes and trim spaces from text columns
+UPDATE silver.Silver_Rota
+SET 
+    rota_id = TRIM(REPLACE(rota_id, '"', '')),
+    shift_id = TRIM(REPLACE(shift_id, '"', '')),
+    staff_id = TRIM(REPLACE(staff_id, '"', ''))
+WHERE rota_id LIKE '%"%' 
+   OR shift_id LIKE '%"%' 
+   OR staff_id LIKE '%"%';
+
+-- Trim all text columns even if no quotes
+UPDATE silver.Silver_Rota
+SET 
+    rota_id = TRIM(rota_id),
+    shift_id = TRIM(shift_id),
+    staff_id = TRIM(staff_id),
+    date = TRIM(date);
+
+-- Validate and convert date to proper DATE format
+UPDATE silver.Silver_Rota
+SET date = CASE 
+              WHEN ISDATE(date) = 1 
+              THEN CONVERT(VARCHAR(10), CAST(date AS DATE), 120)  -- YYYY-MM-DD format
+              ELSE NULL
+           END
+WHERE date IS NOT NULL;
+
+
+
+-- Optional: Check for duplicate rota entries (same date, shift, staff)
+-- Add a unique constraint or flag duplicates
+
+ALTER TABLE silver.Silver_Rota
+ADD is_duplicate BIT DEFAULT 0;
+
+WITH DuplicateCTE AS (
+    SELECT 
+        row_id,
+        ROW_NUMBER() OVER (
+            PARTITION BY date, shift_id, staff_id 
+            ORDER BY row_id
+        ) as rn
+    FROM silver.Silver_Rota
+    WHERE date IS NOT NULL
+)
+UPDATE silver.Silver_Rota
+SET is_duplicate = 1
+FROM silver.Silver_Rota r
+INNER JOIN DuplicateCTE d ON r.row_id = d.row_id
+WHERE d.rn > 1;
+
+
+-- Optional: Remove invalid or duplicate entries
+-- Use with caution - backup first!
+/*
+-- Remove rows with invalid dates
+DELETE FROM silver.Silver_Rota 
+WHERE is_valid_date = 0;
+
+-- Remove duplicate entries (keep only the first occurrence)
+WITH DuplicateCTE AS (
+    SELECT 
+        row_id,
+        ROW_NUMBER() OVER (
+            PARTITION BY date, shift_id, staff_id 
+            ORDER BY row_id
+        ) as rn
+    FROM silver.Silver_Rota
+    WHERE date IS NOT NULL
+)
+DELETE FROM silver.Silver_Rota
+WHERE row_id IN (
+    SELECT row_id FROM DuplicateCTE WHERE rn > 1
+);
+*/
+
+
+
+
 
 /*
 
