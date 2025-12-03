@@ -16,6 +16,10 @@ Usage:
     EXEC bronze.load_bronze;
 ===============================================================================
 */
+IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'bronze')
+    EXEC('CREATE SCHEMA bronze');
+GO
+
 CREATE OR ALTER PROCEDURE bronze.load_bronze AS
 BEGIN
     DECLARE @start_time DATETIME, @end_time DATETIME, @batch_start_time DATETIME, @batch_end_time DATETIME;
@@ -34,13 +38,10 @@ BEGIN
         TRUNCATE TABLE bronze.Bronze_Ingredients;
         PRINT '>> Inserting Data Into: bronze.Bronze_Ingredients';
         BULK INSERT bronze.Bronze_Ingredients
-        FROM 'C:\Path\To\CSV\ingredients.csv'
+        FROM '/var/opt/mssql/data/ingredients.csv'
         WITH (
             FIRSTROW = 2,
             FIELDTERMINATOR = ',',
-            ROWTERMINATOR = '\n',
-            TEXTQUALIFIER = '"',
-            CODEPAGE = '65001',
             TABLOCK
         );
         SET @end_time = GETDATE();
@@ -54,13 +55,10 @@ BEGIN
         TRUNCATE TABLE bronze.Bronze_Inventory;
         PRINT '>> Inserting Data Into: bronze.Bronze_Inventory';
         BULK INSERT bronze.Bronze_Inventory
-        FROM 'C:\Path\To\CSV\inventory.csv'
+        FROM '/var/opt/mssql/data/inventory.csv'
         WITH (
             FIRSTROW = 2,
             FIELDTERMINATOR = ',',
-            ROWTERMINATOR = '\n',
-            TEXTQUALIFIER = '"',
-            CODEPAGE = '65001',
             TABLOCK
         );
         SET @end_time = GETDATE();
@@ -74,13 +72,10 @@ BEGIN
         TRUNCATE TABLE bronze.Bronze_Items;
         PRINT '>> Inserting Data Into: bronze.Bronze_Items';
         BULK INSERT bronze.Bronze_Items
-        FROM 'C:\Path\To\CSV\items.csv'
+        FROM '/var/opt/mssql/data/items.csv'
         WITH (
             FIRSTROW = 2,
             FIELDTERMINATOR = ',',
-            ROWTERMINATOR = '\n',
-            TEXTQUALIFIER = '"',
-            CODEPAGE = '65001',
             TABLOCK
         );
         SET @end_time = GETDATE();
@@ -94,14 +89,12 @@ BEGIN
         TRUNCATE TABLE bronze.Bronze_Orders;
         PRINT '>> Inserting Data Into: bronze.Bronze_Orders';
         BULK INSERT bronze.Bronze_Orders
-        FROM 'C:\Path\To\CSV\orders.csv'
+        FROM '/var/opt/mssql/data/orders.csv'
         WITH (
-            FIRSTROW = 2,
-            FIELDTERMINATOR = ',',
-            ROWTERMINATOR = '\n',
-            TEXTQUALIFIER = '"',
-            CODEPAGE = '65001',
-            TABLOCK
+                FIRSTROW = 2,
+                FIELDTERMINATOR = ',',
+                TABLOCK,
+                FORMAT = 'CSV'
         );
         SET @end_time = GETDATE();
         PRINT '>> Load Duration: ' + CAST(DATEDIFF(SECOND, @start_time, @end_time) AS NVARCHAR) + ' seconds';
@@ -112,15 +105,12 @@ BEGIN
         SET @start_time = GETDATE();
         PRINT '>> Truncating Table: bronze.Bronze_Recipe';
         TRUNCATE TABLE bronze.Bronze_Recipe;
-        PRINT '>> Inserting Data Into: bronze.Bronze_Recipe';
+        PRINT '>> Inserting Data Into: bronze.Bronze_Recipe'; 
         BULK INSERT bronze.Bronze_Recipe
-        FROM 'C:\Path\To\CSV\recipe.csv'
+        FROM '/var/opt/mssql/data/recipe.csv'
         WITH (
             FIRSTROW = 2,
             FIELDTERMINATOR = ',',
-            ROWTERMINATOR = '\n',
-            TEXTQUALIFIER = '"',
-            CODEPAGE = '65001',
             TABLOCK
         );
         SET @end_time = GETDATE();
@@ -134,13 +124,10 @@ BEGIN
         TRUNCATE TABLE bronze.Bronze_Rota;
         PRINT '>> Inserting Data Into: bronze.Bronze_Rota';
         BULK INSERT bronze.Bronze_Rota
-        FROM 'C:\Path\To\CSV\rota.csv'
+        FROM '/var/opt/mssql/data/rota.csv'
         WITH (
             FIRSTROW = 2,
             FIELDTERMINATOR = ',',
-            ROWTERMINATOR = '\n',
-            TEXTQUALIFIER = '"',
-            CODEPAGE = '65001',
             TABLOCK
         );
         SET @end_time = GETDATE();
@@ -154,13 +141,10 @@ BEGIN
         TRUNCATE TABLE bronze.Bronze_Shift;
         PRINT '>> Inserting Data Into: bronze.Bronze_Shift';
         BULK INSERT bronze.Bronze_Shift
-        FROM 'C:\Path\To\CSV\shift.csv'
+        FROM '/var/opt/mssql/data/shift.csv'
         WITH (
             FIRSTROW = 2,
             FIELDTERMINATOR = ',',
-            ROWTERMINATOR = '\n',
-            TEXTQUALIFIER = '"',
-            CODEPAGE = '65001',
             TABLOCK
         );
         SET @end_time = GETDATE();
@@ -174,13 +158,10 @@ BEGIN
         TRUNCATE TABLE bronze.Bronze_Staff;
         PRINT '>> Inserting Data Into: bronze.Bronze_Staff';
         BULK INSERT bronze.Bronze_Staff
-        FROM 'C:\Path\To\CSV\staff.csv'
+        FROM '/var/opt/mssql/data/staff.csv'
         WITH (
             FIRSTROW = 2,
             FIELDTERMINATOR = ',',
-            ROWTERMINATOR = '\n',
-            TEXTQUALIFIER = '"',
-            CODEPAGE = '65001',
             TABLOCK
         );
         SET @end_time = GETDATE();
