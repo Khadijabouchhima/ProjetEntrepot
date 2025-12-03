@@ -19,16 +19,14 @@ Purpose:
             ing_name,
             ing_weight,
             ing_meas,
-            ing_price,
-            dwh_create_date
+            ing_price
         )
         SELECT DISTINCT
             TRIM(ing_id) AS ing_id,
             TRIM(REPLACE(ing_name, '"', '')) AS ing_name,
             ISNULL(ing_weight,0) AS ing_weight,
             TRIM(ing_meas) AS ing_meas,
-            ISNULL(ing_price,0) AS ing_price,
-            dwh_create_date
+            ISNULL(ing_price,0) AS ing_price
         FROM Bronze.Bronze_Ingredients
         WHERE ing_id IS NOT NULL;
         SET @end_time = GETDATE();
