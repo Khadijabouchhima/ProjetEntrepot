@@ -54,3 +54,60 @@ GROUP BY
     LTRIM(RTRIM(b.ing_id));
 
 
+
+/*
+
+===============================================================================
+
+Silver Staff Cleaning Script
+
+===============================================================================
+
+Purpose:
+
+    - Remove quotes from text fields.
+
+    - Trim leading/trailing spaces.
+
+    - Normalize position casing to Title Case.
+
+    - Ensure sal_per_hour is numeric.
+
+===============================================================================
+
+*/
+
+-- Remove quotes and trim spaces from text columns
+UPDATE silver.Silver_Staff
+SET 
+    first_name = TRIM(REPLACE(first_name, '"', '')),
+    last_name = TRIM(REPLACE(last_name, '"', '')),
+    position = TRIM(REPLACE(position, '"', ''))
+WHERE first_name LIKE '%"%' 
+   OR last_name LIKE '%"%' 
+   OR position LIKE '%"%';
+
+-- Trim spaces even if no quotes
+UPDATE silver.Silver_Staff
+SET 
+    first_name = TRIM(first_name),
+    last_name = TRIM(last_name),
+    position = TRIM(position);
+
+-- Normalize position casing (make first letter uppercase, rest lowercase)
+UPDATE silver.Silver_Staff
+SET position = CONCAT(
+    UPPER(LEFT(position, 1)),
+    LOWER(SUBSTRING(position, 2, LEN(position)))
+)
+WHERE position IS NOT NULL;
+
+-- Optional: Validate sal_per_hour is numeric and positive
+-- This will convert text to decimal if needed
+UPDATE silver.Silver_Staff
+SET sal_per_hour = TRY_CAST(TRIM(sal_per_hour) AS DECIMAL(10,2))
+WHERE TRY_CAST(TRIM(sal_per_hour) AS DECIMAL(10,2)) IS NOT NULL;
+
+-- Remove rows with invalid salary if needed
+-- DELETE FROM silver.Silver_Staff 
+-- WHERE sal_per_hour IS NULL OR sal_per_hour <= 0;
