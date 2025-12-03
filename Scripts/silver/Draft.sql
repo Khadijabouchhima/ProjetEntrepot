@@ -9,21 +9,31 @@ Purpose:
     - Normalize casing to Title Case (optional).
 ===============================================================================
 */
+        SET @start_time = GETDATE();
+        PRINT '>> Truncating Table: silver.Silver_Ingredients';
+        TRUNCATE TABLE silver.Silver_Ingredients;
 
--- Remove quotes and trim spaces
-UPDATE silver.Silver_Ingredients
-SET ing_name = TRIM(REPLACE(ing_name, '"', ''))
-WHERE ing_name LIKE '%"%';
+        PRINT '>> Inserting Data Into: silver.Silver_Ingredients';
+        INSERT INTO silver.Silver_Ingredients (
+            ing_id,
+            ing_name,
+            ing_weight,
+            ing_meas,
+            ing_price,
+            dwh_create_date
+        )
+        SELECT DISTINCT
+            TRIM(ing_id) AS ing_id,
+            TRIM(REPLACE(ing_name, '"', '')) AS ing_name,
+            ISNULL(ing_weight,0) AS ing_weight,
+            TRIM(ing_meas) AS ing_meas,
+            ISNULL(ing_price,0) AS ing_price,
+            dwh_create_date
+        FROM Bronze.Bronze_Ingredients
+        WHERE ing_id IS NOT NULL;
+        SET @end_time = GETDATE();
+        PRINT '>> Load Duration: ' + CAST(DATEDIFF(SECOND, @start_time, @end_time) AS NVARCHAR) + ' seconds';
 
--- Optional: normalize casing to Title Case
--- Note: SQL Server doesn't have built-in title case, but you can use this simple function:
--- (For complex names, consider using a CLR function or handle in ETL)
-UPDATE silver.Silver_Ingredients
-SET ing_name = CONCAT(
-    UPPER(LEFT(ing_name,1)),
-    LOWER(SUBSTRING(ing_name,2,LEN(ing_name)))
-)
-WHERE ing_name IS NOT NULL;
 /*
 ===============================================================================
 Silver Inventory Cleaning Script
