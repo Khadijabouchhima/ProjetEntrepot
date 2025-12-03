@@ -11,6 +11,9 @@ Notes:         Drops existing tables and recreates them.
 -- ==============================================
 -- Silver_Ingredients
 -- ==============================================
+IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'Silver')
+    EXEC('CREATE SCHEMA Silver');
+GO
 IF OBJECT_ID('Silver.Silver_Ingredients', 'U') IS NOT NULL
     DROP TABLE Silver.Silver_Ingredients;
 GO
