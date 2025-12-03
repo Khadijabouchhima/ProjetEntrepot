@@ -55,6 +55,193 @@ GROUP BY
 
 
 
+
+/*
+
+===============================================================================
+
+Silver Recipe Cleaning Script
+
+===============================================================================
+
+Purpose:
+
+    - Remove quotes from text fields.
+
+    - Trim leading/trailing spaces.
+
+    - Validate quantity is numeric and positive.
+
+    - Ensure recipe_id and ing_id follow expected format patterns.
+
+    - Check for duplicate recipe-ingredient combinations.
+
+===============================================================================
+
+*/
+
+-- Remove quotes and trim spaces from text columns
+UPDATE silver.Silver_Recipe
+SET 
+    recipe_id = TRIM(REPLACE(recipe_id, '"', '')),
+    ing_id = TRIM(REPLACE(ing_id, '"', ''))
+WHERE recipe_id LIKE '%"%' OR ing_id LIKE '%"%';
+
+-- Trim all text columns even if no quotes
+UPDATE silver.Silver_Recipe
+SET 
+    recipe_id = TRIM(recipe_id),
+    ing_id = TRIM(ing_id);
+
+-- Validate and convert quantity to numeric (if stored as text)
+-- Using DECIMAL(10,2) to allow for decimal quantities if needed
+UPDATE silver.Silver_Recipe
+SET quantity = TRY_CAST(TRIM(quantity) AS DECIMAL(10,2))
+WHERE TRY_CAST(TRIM(quantity) AS DECIMAL(10,2)) IS NOT NULL;
+
+-- Optional: Mark rows with invalid quantity
+/*
+ALTER TABLE silver.Silver_Recipe
+ADD is_valid_quantity BIT DEFAULT 1;
+
+UPDATE silver.Silver_Recipe
+SET is_valid_quantity = 0
+WHERE TRY_CAST(TRIM(quantity) AS DECIMAL(10,2)) IS NULL;
+*/
+
+-- Optional: Validate quantity is positive (or non-negative)
+UPDATE silver.Silver_Recipe
+SET is_valid_quantity = 0
+WHERE quantity < 0;
+
+-- Optional: Validate recipe_id format pattern
+-- Assuming format: XXX-XXX-XX or similar pattern
+/*
+ALTER TABLE silver.Silver_Recipe
+ADD is_valid_recipe_id BIT DEFAULT 1;
+
+UPDATE silver.Silver_Recipe
+SET is_valid_recipe_id = 0
+WHERE recipe_id NOT LIKE '[A-Z][A-Z][A-Z]-[A-Z][A-Z][A-Z]-[A-Z][A-Z]'
+   AND recipe_id NOT LIKE '[A-Z][A-Z][A-Z]-[A-Z][A-Z][A-Z]'
+   AND recipe_id IS NOT NULL;
+*/
+
+-- Optional: Validate ing_id format pattern
+-- Assuming format: ING followed by 3 digits
+/*
+ALTER TABLE silver.Silver_Recipe
+ADD is_valid_ing_id BIT DEFAULT 1;
+
+UPDATE silver.Silver_Recipe
+SET is_valid_ing_id = 0
+WHERE ing_id NOT LIKE 'ING[0-9][0-9][0-9]'
+   AND ing_id IS NOT NULL;
+*/
+
+-- Optional: Check for duplicate recipe-ingredient combinations
+/*
+ALTER TABLE silver.Silver_Recipe
+ADD is_duplicate BIT DEFAULT 0;
+
+WITH DuplicateCTE AS (
+    SELECT 
+        row_id,
+        ROW_NUMBER() OVER (
+            PARTITION BY recipe_id, ing_id 
+            ORDER BY row_id
+        ) as rn
+    FROM silver.Silver_Rota
+    WHERE recipe_id IS NOT NULL AND ing_id IS NOT NULL
+)
+UPDATE silver.Silver_Recipe
+SET is_duplicate = 1
+FROM silver.Silver_Recipe r
+INNER JOIN DuplicateCTE d ON r.row_id = d.row_id
+WHERE d.rn > 1;
+*/
+
+-- Optional: Check for missing/invalid ingredient references
+-- Assuming you have a Silver_Ingredients table
+/*
+ALTER TABLE silver.Silver_Recipe
+ADD has_valid_ingredient BIT DEFAULT 1;
+
+UPDATE silver.Silver_Recipe
+SET has_valid_ingredient = 0
+WHERE NOT EXISTS (
+    SELECT 1 FROM silver.Silver_Ingredients i 
+    WHERE i.ing_id = silver.Silver_Recipe.ing_id
+);
+*/
+
+-- Optional: Add derived columns for analysis
+-- Extract product category from recipe_id (assuming format CAT-PROD-SIZE)
+/*
+ALTER TABLE silver.Silver_Recipe
+ADD 
+    product_category AS 
+        CASE 
+            WHEN CHARINDEX('-', recipe_id) > 0 
+            THEN LEFT(recipe_id, CHARINDEX('-', recipe_id) - 1)
+            ELSE NULL
+        END,
+    product_size AS 
+        CASE 
+            WHEN LEN(recipe_id) - LEN(REPLACE(recipe_id, '-', '')) >= 2
+            THEN RIGHT(recipe_id, CHARINDEX('-', REVERSE(recipe_id)) - 1)
+            ELSE NULL
+        END;
+*/
+
+-- Optional: Validate that quantities are within reasonable ranges
+-- Adjust the range based on your business knowledge
+/*
+UPDATE silver.Silver_Recipe
+SET is_valid_quantity = 0
+WHERE quantity > 1000 OR quantity < 0.1;
+*/
+
+-- Optional: Remove invalid or problematic rows
+-- Use with caution - backup first!
+/*
+-- Remove rows with invalid quantity
+DELETE FROM silver.Silver_Recipe 
+WHERE is_valid_quantity = 0;
+
+-- Remove duplicate recipe-ingredient combinations (keep first)
+WITH DuplicateCTE AS (
+    SELECT 
+        row_id,
+        ROW_NUMBER() OVER (
+            PARTITION BY recipe_id, ing_id 
+            ORDER BY row_id
+        ) as rn
+    FROM silver.Silver_Recipe
+    WHERE recipe_id IS NOT NULL AND ing_id IS NOT NULL
+)
+DELETE FROM silver.Silver_Recipe
+WHERE row_id IN (
+    SELECT row_id FROM DuplicateCTE WHERE rn > 1
+);
+
+-- Remove rows with invalid references
+DELETE FROM silver.Silver_Recipe 
+WHERE has_valid_ingredient = 0;
+*/
+
+-- Optional: Add total ingredients per recipe for validation
+/*
+SELECT 
+    recipe_id,
+    COUNT(DISTINCT ing_id) as num_ingredients,
+    SUM(quantity) as total_quantity
+FROM silver.Silver_Recipe
+GROUP BY recipe_id
+ORDER BY recipe_id;
+*/
+
+
 /*
 
 ===============================================================================
