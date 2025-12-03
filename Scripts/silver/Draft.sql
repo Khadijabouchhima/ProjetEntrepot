@@ -133,7 +133,7 @@ WHERE d.rn > 1;
 
 -- Optional: Remove invalid or duplicate entries
 -- Use with caution - backup first!
-/*
+
 -- Remove rows with invalid dates
 DELETE FROM silver.Silver_Rota 
 WHERE is_valid_date = 0;
@@ -153,7 +153,7 @@ DELETE FROM silver.Silver_Rota
 WHERE row_id IN (
     SELECT row_id FROM DuplicateCTE WHERE rn > 1
 );
-*/
+
 
 
 
