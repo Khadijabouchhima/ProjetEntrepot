@@ -274,3 +274,28 @@ BEGIN
         PRINT '==========================================';
     END CATCH
 END;
+
+--------------------------------------------Cleaning silver_orders -----------------------------------------------------------------------
+UPDATE silver.silver_orders
+SET item_id =
+    CASE
+        WHEN LEN(item_id) > 5 THEN
+            CASE
+                WHEN TRY_CAST(SUBSTRING(TRIM(item_id), 3, 3) AS INT) BETWEEN 1 AND 24
+                     AND LEFT(TRIM(item_id), 2) = 'It'
+                     AND LEN(TRIM(item_id)) = 5
+                THEN TRIM(item_id)
+                ELSE 'UNKNOWN'
+            END
+
+        ELSE
+            -- Length <=5 → validate directly
+            CASE
+                WHEN TRY_CAST(SUBSTRING(item_id, 3, 3) AS INT) BETWEEN 1 AND 24
+                     AND LEFT(item_id, 2) = 'It'
+                     AND LEN(item_id) = 5
+                THEN item_id
+                ELSE 'UNKNOWN'
+            END
+    END;
+
