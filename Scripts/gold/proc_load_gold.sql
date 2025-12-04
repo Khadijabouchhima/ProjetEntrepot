@@ -84,22 +84,22 @@ PRINT '================================================';
 PRINT 'Gold Layer Load: dim_time Completed Successfully';
 PRINT '================================================';
 
--- dim item 
+-- dim items 
 -------------------------------------------------------------
--- Load dim_item
+-- Load dim_items
 -------------------------------------------------------------
 DECLARE @start_time DATETIME2, @end_time DATETIME2;
 
 SET @start_time = GETDATE();
 PRINT '================================================';
-PRINT 'Starting Gold Layer Load: dim_item';
+PRINT 'Starting Gold Layer Load: dim_items';
 PRINT '================================================';
 
-PRINT '>> Truncating Table: gold.dim_item';
-TRUNCATE TABLE gold.dim_item;
+PRINT '>> Truncating Table: gold.dim_items';
+TRUNCATE TABLE gold.dim_items;
 
-PRINT '>> Inserting Data Into: gold.dim_item';
-INSERT INTO gold.dim_item (
+PRINT '>> Inserting Data Into: gold.dim_items';
+INSERT INTO gold.dim_items (
     item_id,
     sku,
     cat_code,
@@ -120,9 +120,9 @@ SELECT DISTINCT
     item_price
 FROM silver.Silver_Items
 SET @end_time = GETDATE();
-PRINT '>> dim_item Load Duration: ' + CAST(DATEDIFF(SECOND, @start_time, @end_time) AS NVARCHAR) + ' seconds';
+PRINT '>> dim_items Load Duration: ' + CAST(DATEDIFF(SECOND, @start_time, @end_time) AS NVARCHAR) + ' seconds';
 PRINT '================================================';
-PRINT 'Gold Layer Load: dim_item Completed Successfully';
+PRINT 'Gold Layer Load: dim_items Completed Successfully';
 PRINT '================================================';
 
 -- dim ingredients 
