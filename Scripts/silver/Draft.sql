@@ -75,6 +75,7 @@ BEGIN
             sku_size_code,
             item_name,
             item_cat,
+            item_size,
             item_price,
             dwh_create_date
         )
@@ -102,6 +103,7 @@ BEGIN
             END AS sku_size_code,
             TRIM(REPLACE(item_name, '"', '')) AS item_name,
             TRIM(REPLACE(item_cat, '"', '')) AS item_cat, 
+            item_size,
             item_price,
             GETDATE() AS dwh_create_date
         FROM bronze.Bronze_Items;
