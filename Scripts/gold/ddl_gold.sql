@@ -1,0 +1,125 @@
+IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'Gold')
+    EXEC('CREATE SCHEMA Gold');
+GO
+
+----------------------- Dimensions -------------------------
+
+-- dim date
+
+------------------------------------------------------------
+
+CREATE TABLE Gold.dim_date (
+    date_key        INT PRIMARY KEY,     -- YYYYMMDD
+    full_date       DATE,
+    year            INT,
+    quarter         INT,
+    month           INT,
+    month_name      VARCHAR(20),
+    day             INT,
+    day_of_week     INT,
+    day_name        VARCHAR(20),
+    week_of_year    INT,
+    dwh_create_date DATETIME2 DEFAULT GETDATE()
+);
+------------------------------------------------------------
+
+-- dim time
+
+------------------------------------------------------------
+
+CREATE TABLE Gold.dim_time (
+    time_key       INT PRIMARY KEY,  -- HHMMSS
+    full_time      TIME,
+    hour           INT,
+    minute         INT,
+    second         INT,
+    am_pm          VARCHAR(2),
+    dwh_create_date DATETIME2 DEFAULT GETDATE()
+);
+------------------------------------------------------------
+
+-- dim item 
+
+------------------------------------------------------------
+
+CREATE TABLE Gold.dim_item (
+    item_key        INT IDENTITY(1,1) PRIMARY KEY,  -- Surrogate key
+    item_id         VARCHAR(50),                    -- Business key from Silver_Items
+    sku             VARCHAR(50),
+    cat_code    VARCHAR(20),
+    item_code   VARCHAR(20),
+    size_code   VARCHAR(20),
+    item_name       VARCHAR(100),
+    item_cat        VARCHAR(50),
+    item_price      DECIMAL(10,2),
+    dwh_create_date DATETIME2 DEFAULT GETDATE()
+);
+------------------------------------------------------------
+
+-- dim ingredient 
+
+------------------------------------------------------------
+
+CREATE TABLE Gold.dim_ingredients (
+    ingredient_key   INT IDENTITY(1,1) PRIMARY KEY, -- Surrogate key
+    ing_id           VARCHAR(50),                   -- Business key from Silver_Ingredients
+    ing_name         VARCHAR(100),
+    ing_weight       DECIMAL(10,2),
+    ing_meas         VARCHAR(20),
+    ing_price        DECIMAL(10,2),
+    dwh_create_date  DATETIME2 DEFAULT GETDATE()
+);
+
+------------------------------------------------------------
+
+-- dim staff
+
+------------------------------------------------------------
+
+CREATE TABLE Gold.dim_staff (
+    staff_key       INT IDENTITY(1,1) PRIMARY KEY, -- Surrogate key
+    staff_id        VARCHAR(50),                   -- Business key from Silver_Staff
+    first_name      VARCHAR(50),
+    last_name       VARCHAR(50),
+    position        VARCHAR(50),
+    sal_per_hour    DECIMAL(10,2),
+    dwh_create_date DATETIME2 DEFAULT GETDATE()
+);
+------------------------------------------------------------
+
+-- dim shift 
+
+------------------------------------------------------------
+
+CREATE TABLE Gold.dim_shift (
+    shift_key       INT IDENTITY(1,1) PRIMARY KEY,  -- Surrogate key
+    shift_id        VARCHAR(50),                    -- Business key from Silver_Shift
+    day_of_week     INT,                            -- 1 = Monday, 7 = Sunday
+    day_name        VARCHAR(20),
+    start_time      TIME,
+    end_time        TIME,
+    shift_period    VARCHAR(50),                    -- Morning, afternoon, evening or night
+    dwh_create_date DATETIME2 DEFAULT GETDATE()
+);
+
+------------------------------------------------------------
+
+-- dim rota 
+
+------------------------------------------------------------
+CREATE TABLE Gold.dim_rota (
+    rota_key       INT PRIMARY KEY,  -- surrogate key
+    rota_id        VARCHAR(50),                    -- source system id
+    date_key       INT,                            -- FK → dim_date
+    time_key       INT,                            -- FK → dim_time (shift start time)
+    shift_key      VARCHAR(50),                    -- FK → dim_shift
+    staff_key    VARCHAR(50),                    -- FK → dim_staff
+
+);
+
+----------------------- Facts ------------------------------
+
+
+
+
+
