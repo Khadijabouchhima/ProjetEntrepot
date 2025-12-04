@@ -113,13 +113,12 @@ BEGIN
         ---------------------------------------------
         -- Silver Orders
         ---------------------------------------------
-        SET @start_time = GETDATE();
+        
         PRINT '>> Truncating Table: silver.Silver_Orders';
         TRUNCATE TABLE silver.Silver_Orders;
-
+        
         PRINT '>> Inserting Data Into: silver.Silver_Orders';
         INSERT INTO silver.Silver_Orders (
-            row_id,
             order_id,
             created_at,
             order_date,
@@ -131,17 +130,18 @@ BEGIN
             dwh_create_date
         )
         SELECT
-            row_id,
-            TRIM(order_id) AS order_id,
-            created_at,
-            CAST(created_at AS DATE) AS order_date,
-            CAST(created_at AS TIME) AS order_time,
-            TRIM(item_id) AS item_id,
-            quantity,
-            TRIM(cust_name) AS cust_name,
-            ISNULL(in_or_out,'N/A') AS in_or_out,
+            TRIM(o.order_id) AS order_id,
+            o.created_at,
+            CAST(o.created_at AS DATE) AS order_date,
+            CAST(o.created_at AS TIME) AS order_time,
+            TRIM(o.item_id) AS item_id,
+            o.quantity,
+            TRIM(o.cust_name) AS cust_name,
+            ISNULL(o.in_or_out,'N/A') AS in_or_out,
             GETDATE() AS dwh_create_date
-        FROM Bronze.Bronze_orders;
+        FROM Bronze.Bronze_orders o
+        INNER JOIN silver.Silver_Items i
+        ON TRIM(o.item_id) = i.item_id; 
         SET @end_time = GETDATE();
         PRINT '>> Silver_Orders Load Duration: ' + CAST(DATEDIFF(SECOND, @start_time, @end_time) AS NVARCHAR) + ' seconds';
 
@@ -275,27 +275,4 @@ BEGIN
     END CATCH
 END;
 
---------------------------------------------Cleaning silver_orders -----------------------------------------------------------------------
-UPDATE silver.silver_orders
-SET item_id =
-    CASE
-        WHEN LEN(item_id) > 5 THEN
-            CASE
-                WHEN TRY_CAST(SUBSTRING(TRIM(item_id), 3, 3) AS INT) BETWEEN 1 AND 24
-                     AND LEFT(TRIM(item_id), 2) = 'It'
-                     AND LEN(TRIM(item_id)) = 5
-                THEN TRIM(item_id)
-                ELSE 'UNKNOWN'
-            END
-
-        ELSE
-            -- Length <=5 → validate directly
-            CASE
-                WHEN TRY_CAST(SUBSTRING(item_id, 3, 3) AS INT) BETWEEN 1 AND 24
-                     AND LEFT(item_id, 2) = 'It'
-                     AND LEN(item_id) = 5
-                THEN item_id
-                ELSE 'UNKNOWN'
-            END
-    END;
 
