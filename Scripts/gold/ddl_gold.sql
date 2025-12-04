@@ -119,27 +119,37 @@ CREATE TABLE Gold.dim_rota (
 
 ----------------------- Facts ------------------------------
 
--- fact order
-CREATE TABLE gold.fact_orders (
-    order_key      INT PRIMARY KEY,       -- source row_id
-    item_key       INT NOT NULL,          -- FK → gold.dim_items
-    rota_key       INT NOT NULL,          -- FK → gold.dim_rota
-    order_id       VARCHAR(50),
-    quantity       INT NOT NULL,
-    item_price     DECIMAL(10,2) NOT NULL,
-    total_price    DECIMAL(10,2) NOT NULL
+------------------------------------------------------------
+
+-- fact orders 
+
+------------------------------------------------------------
+
+CREATE TABLE Gold.fact_orders (
+    order_key   INT             NOT NULL,
+    date_key    INT             NOT NULL,
+    time_key    INT             NOT NULL,
+    item_key    INT             NOT NULL,
+    order_id    VARCHAR(50)     NULL,
+    quantity    INT             NOT NULL,
+    item_price  DECIMAL(10, 2)  NOT NULL,
+    total_price DECIMAL(10, 2)  NOT NULL,
+    
+    CONSTRAINT PK_fact_orders PRIMARY KEY CLUSTERED (order_key ASC),
+    
+    CONSTRAINT FK_fact_orders_date FOREIGN KEY (date_key) 
+        REFERENCES Gold.dim_date (date_key),
+    CONSTRAINT FK_fact_orders_item FOREIGN KEY (item_key) 
+        REFERENCES Gold.dim_items (item_key),
+    CONSTRAINT FK_fact_orders_time FOREIGN KEY (time_key) 
+        REFERENCES Gold.dim_time (time_key)
 );
 
--- Add foreign key constraints
-ALTER TABLE gold.fact_orders
-ADD CONSTRAINT FK_fact_orders_item
-FOREIGN KEY (item_key) REFERENCES gold.dim_items(item_key);
+------------------------------------------------------------
 
-ALTER TABLE gold.fact_orders
-ADD CONSTRAINT FK_fact_orders_rota
-FOREIGN KEY (rota_key) REFERENCES gold.dim_rota(rota_key);
+-- fact orders 
 
-
+------------------------------------------------------------
 
 
 
