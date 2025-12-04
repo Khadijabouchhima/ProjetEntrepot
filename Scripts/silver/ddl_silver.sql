@@ -72,7 +72,7 @@ IF OBJECT_ID('Silver.Silver_Orders', 'U') IS NOT NULL
 GO
 
 CREATE TABLE Silver.Silver_Orders (
-    row_id           INT NULL,
+    row_id           INT IDENTITY(1,1) PRIMARY KEY, 
     order_id         VARCHAR(50) NULL,
     created_at       DATETIME NULL,
     order_date       DATE NULL,
