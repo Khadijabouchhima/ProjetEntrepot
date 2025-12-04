@@ -305,3 +305,56 @@ PRINT '>> dim_rota Load Duration: ' + CAST(DATEDIFF(SECOND, @start_time, @end_ti
 PRINT '================================================';
 PRINT 'Gold Layer Load: dim_rota Completed Successfully';
 PRINT '================================================';
+
+
+-------------------------------------------------------------
+-- Load fact_orders
+-------------------------------------------------------------
+DECLARE @start_time DATETIME2, @end_time DATETIME2;
+
+SET @start_time = GETDATE();
+PRINT '================================================';
+PRINT 'Starting Gold Layer Load: fact_orders';
+PRINT '================================================';
+
+-- Truncate existing data
+PRINT '>> Truncating Table: gold.fact_orders';
+TRUNCATE TABLE gold.fact_orders;
+
+-- Insert new data
+PRINT '>> Inserting Data Into: gold.fact_orders';
+INSERT INTO gold.fact_orders (
+    order_key,
+    date_key,
+    time_key,
+    item_key,
+    order_id,
+    quantity,
+    item_price,
+    total_price
+)
+SELECT
+    o.row_id,
+    d.date_key,
+    t.time_key,
+    i.item_key,
+    o.order_id,
+    o.quantity,
+    i.item_price,
+    o.quantity * i.item_price AS total_price
+FROM silver.Silver_Orders o
+LEFT JOIN gold.dim_date d 
+    ON d.full_date = o.order_date
+LEFT JOIN gold.dim_time t
+    ON t.full_time = o.order_time
+LEFT JOIN gold.dim_items i
+    ON i.item_id = o.item_id;
+
+-- End time and duration
+SET @end_time = GETDATE();
+PRINT '>> fact_orders Load Duration: ' 
+    + CAST(DATEDIFF(SECOND, @start_time, @end_time) AS NVARCHAR) + ' seconds';
+PRINT '================================================';
+PRINT 'Gold Layer Load: fact_orders Completed Successfully';
+PRINT '================================================';
+
