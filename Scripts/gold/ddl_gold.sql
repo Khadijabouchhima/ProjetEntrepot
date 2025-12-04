@@ -42,7 +42,7 @@ CREATE TABLE Gold.dim_time (
 
 ------------------------------------------------------------
 
-CREATE TABLE Gold.dim_item (
+CREATE TABLE Gold.dim_items (
     item_key        INT IDENTITY(1,1) PRIMARY KEY,  -- Surrogate key
     item_id         VARCHAR(50),                    -- Business key from Silver_Items
     sku             VARCHAR(50),
@@ -118,6 +118,27 @@ CREATE TABLE Gold.dim_rota (
 );
 
 ----------------------- Facts ------------------------------
+
+-- fact order
+CREATE TABLE gold.fact_orders (
+    order_key      INT PRIMARY KEY,       -- source row_id
+    item_key       INT NOT NULL,          -- FK → gold.dim_items
+    rota_key       INT NOT NULL,          -- FK → gold.dim_rota
+    order_id       VARCHAR(50),
+    quantity       INT NOT NULL,
+    item_price     DECIMAL(10,2) NOT NULL,
+    total_price    DECIMAL(10,2) NOT NULL
+);
+
+-- Add foreign key constraints
+ALTER TABLE gold.fact_orders
+ADD CONSTRAINT FK_fact_orders_item
+FOREIGN KEY (item_key) REFERENCES gold.dim_items(item_key);
+
+ALTER TABLE gold.fact_orders
+ADD CONSTRAINT FK_fact_orders_rota
+FOREIGN KEY (rota_key) REFERENCES gold.dim_rota(rota_key);
+
 
 
 
