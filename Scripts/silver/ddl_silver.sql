@@ -53,6 +53,9 @@ GO
 CREATE TABLE Silver.Silver_Items (
     item_id          VARCHAR(50) NULL,
     sku              VARCHAR(50) NULL,
+    sku_cat_code            VARCHAR(50) NULL,
+    sku_item_code            VARCHAR(50) NULL,
+    sku_size_code            VARCHAR(50) NULL,
     item_name        VARCHAR(200) NULL,
     item_cat         VARCHAR(100) NULL,
     item_size        VARCHAR(50) NULL,
@@ -72,6 +75,8 @@ CREATE TABLE Silver.Silver_Orders (
     row_id           INT NULL,
     order_id         VARCHAR(50) NULL,
     created_at       DATETIME NULL,
+    order_date       DATE NULL,
+    order_time       TIME NULL,
     item_id          VARCHAR(50) NULL,
     quantity         DECIMAL(18,4) NULL,
     cust_name        VARCHAR(200) NULL,
