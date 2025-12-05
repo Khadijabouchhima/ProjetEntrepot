@@ -114,6 +114,7 @@ CREATE TABLE Gold.dim_rota (
     time_key       INT,                            -- FK → dim_time (shift start time)
     shift_key      VARCHAR(50),                    -- FK → dim_shift
     staff_key    VARCHAR(50),                    -- FK → dim_staff
+    dwh_create_date DATETIME2 DEFAULT GETDATE()
 
 );
 
@@ -134,6 +135,7 @@ CREATE TABLE Gold.fact_orders (
     quantity    INT             NOT NULL,
     item_price  DECIMAL(10, 2)  NOT NULL,
     total_price DECIMAL(10, 2)  NOT NULL,
+    dwh_create_date DATETIME2 DEFAULT GETDATE()
     
     CONSTRAINT PK_fact_orders PRIMARY KEY CLUSTERED (order_key ASC),
     
@@ -158,6 +160,7 @@ CREATE TABLE [Gold].[fact_labor] (
     [staff_key]      INT NOT NULL,                  -- FK → dim_staff
     [hours_worked]   DECIMAL(5,2) NOT NULL,        -- shift duration in hours
     [labor_cost]     DECIMAL(10,2) NOT NULL,       -- hours_worked * salary per hour
+    dwh_create_date DATETIME2 DEFAULT GETDATE()
 
     CONSTRAINT FK_fact_rota_date  FOREIGN KEY ([date_key])  REFERENCES [Gold].[dim_date] ([date_key]),
     CONSTRAINT FK_fact_rota_shift FOREIGN KEY ([shift_key]) REFERENCES [Gold].[dim_shift] ([shift_key]),
