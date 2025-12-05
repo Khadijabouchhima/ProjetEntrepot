@@ -147,10 +147,44 @@ CREATE TABLE Gold.fact_orders (
 
 ------------------------------------------------------------
 
--- fact orders 
+-- fact labor 
 
 ------------------------------------------------------------
 
+CREATE TABLE [Gold].[fact_labor] (
+    [rota_key]       INT IDENTITY(1,1) PRIMARY KEY,  -- surrogate key
+    [date_key]       INT NOT NULL,                  -- FK → dim_date
+    [shift_key]      INT NOT NULL,                  -- FK → dim_shift
+    [staff_key]      INT NOT NULL,                  -- FK → dim_staff
+    [hours_worked]   DECIMAL(5,2) NOT NULL,        -- shift duration in hours
+    [labor_cost]     DECIMAL(10,2) NOT NULL,       -- hours_worked * salary per hour
 
+    CONSTRAINT FK_fact_rota_date  FOREIGN KEY ([date_key])  REFERENCES [Gold].[dim_date] ([date_key]),
+    CONSTRAINT FK_fact_rota_shift FOREIGN KEY ([shift_key]) REFERENCES [Gold].[dim_shift] ([shift_key]),
+    CONSTRAINT FK_fact_rota_staff FOREIGN KEY ([staff_key]) REFERENCES [Gold].[dim_staff] ([staff_key])
+);
+
+
+------------------------------------------------------------
+
+-- fact recipe
+
+------------------------------------------------------------
+
+CREATE TABLE Gold.fact_recipe (
+    recipe_key      INT IDENTITY(1,1) PRIMARY KEY,
+    item_key             INT NOT NULL,                   
+    ingredient_key              INT NOT NULL,                   
+    item_inventory       DECIMAL(18,4) NOT NULL,         
+    quantity_needed      DECIMAL(18,4) NOT NULL,
+    shortage_quantity    DECIMAL(18,4) NOT NULL, 
+    cost_per_unit        DECIMAL(18,4) NOT NULL,           
+    cost                 DECIMAL(18,4) NOT NULL,         
+    is_available         BIT NOT NULL,                   
+    is_recipe_feasible   BIT NOT NULL,                   
+    dwh_load_date        DATETIME2 DEFAULT GETDATE(),  
+    CONSTRAINT FK_fact_recipe_item  FOREIGN KEY (item_key)  REFERENCES Gold.dim_items (item_key),
+    CONSTRAINT FK_fact_recipe_ing FOREIGN KEY (ingredient_key) REFERENCES Gold.dim_ingredients(ingredient_key),
+);
 
 
