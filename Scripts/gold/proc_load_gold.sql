@@ -358,3 +358,130 @@ PRINT '================================================';
 PRINT 'Gold Layer Load: fact_orders Completed Successfully';
 PRINT '================================================';
 
+-- fact rota 
+-------------------------------------------------------------
+-- Load fact_rota
+-------------------------------------------------------------
+
+DECLARE @start_time DATETIME2, @end_time DATETIME2;
+
+SET @start_time = GETDATE();
+PRINT '================================================';
+PRINT 'Starting Gold Layer Load: fact_rota';
+PRINT '================================================';
+
+PRINT '>> Truncating Table: gold.fact_rota';
+TRUNCATE TABLE gold.fact_labor;
+
+PRINT '>> Inserting Data Into: gold.fact_rota';
+INSERT INTO gold.fact_labor (
+    date_key,
+    shift_key,
+    staff_key,
+    hours_worked,
+    labor_cost
+)
+SELECT
+    d.date_key,
+    sh.shift_key,
+    st.staff_key,
+    CAST(DATEDIFF(MINUTE, sh.start_time, sh.end_time) AS DECIMAL(5,2)) / 60.0 AS hours_worked,
+    (CAST(DATEDIFF(MINUTE, sh.start_time, sh.end_time) AS DECIMAL(5,2)) / 60.0) * st.sal_per_hour AS labor_cost
+FROM silver.Silver_Rota r
+JOIN gold.dim_date d
+    ON d.full_date = r.date
+JOIN gold.dim_shift sh
+    ON sh.shift_id = r.shift_id
+JOIN gold.dim_staff st
+    ON st.staff_id = r.staff_id
+-- Link to time dimension by shift start time
+
+SET @end_time = GETDATE();
+PRINT '>> fact_labor Load Duration: ' 
+    + CAST(DATEDIFF(SECOND, @start_time, @end_time) AS NVARCHAR) + ' seconds';
+PRINT '================================================';
+PRINT 'Gold Layer Load: fact_labor Completed Successfully';
+PRINT '================================================';
+
+-- fact recipe 
+-------------------------------------------------------------
+-- Load fact_recipe
+-------------------------------------------------------------
+
+DECLARE @start_time DATETIME2, @end_time DATETIME2;
+
+SET @start_time = GETDATE();
+PRINT '================================================';
+PRINT 'Starting Gold Layer Load: fact_recipe';
+PRINT '================================================';
+
+PRINT '>> Truncating Table: gold.fact_recipe';
+TRUNCATE TABLE gold.fact_recipe;
+
+PRINT '>> Inserting Data Into: gold.fact_recipe';
+
+;WITH base AS (
+    SELECT 
+        i.item_key,
+        ing.ingredient_key,
+        inv.quantity AS item_inventory,
+        r.quantity AS quantity_needed,
+        CASE 
+            WHEN inv.quantity - r.quantity < 0 
+            THEN ABS(inv.quantity - r.quantity)
+            ELSE 0
+        END AS shortage_quantity,
+        ing.ing_price AS cost_per_unit,
+        (r.quantity * ing.ing_price) AS cost,
+        CASE 
+            WHEN inv.quantity >= r.quantity THEN 1 
+            ELSE 0 
+        END AS is_available
+    FROM silver.silver_recipe r
+    JOIN gold.dim_items i
+        ON i.sku = r.recipe_id
+    JOIN gold.dim_ingredients ing
+        ON ing.ing_id = r.ing_id
+    JOIN silver.silver_inventory inv
+        ON inv.ing_id = ing.ing_id
+),
+recipe_status AS (
+    SELECT 
+        *,
+        CASE 
+            WHEN MIN(is_available) OVER (PARTITION BY item_key) = 1 THEN 1
+            ELSE 0
+        END AS is_recipe_feasible
+    FROM base
+)
+INSERT INTO gold.fact_recipe (
+    item_key,
+    ingredient_key,
+    item_inventory,
+    quantity_needed,
+    shortage_quantity,
+    cost_per_unit,
+    cost,
+    is_available,
+    is_recipe_feasible
+)
+SELECT 
+    item_key,
+    ingredient_key,
+    item_inventory,
+    quantity_needed,
+    shortage_quantity,
+    cost_per_unit,
+    cost,
+    is_available,
+    is_recipe_feasible
+FROM recipe_status;
+
+SET @end_time = GETDATE();
+
+PRINT '>> fact_recipe Load Duration: ' 
+    + CAST(DATEDIFF(SECOND, @start_time, @end_time) AS NVARCHAR) + ' seconds';
+PRINT '================================================';
+PRINT 'Gold Layer Load: fact_recipe Completed Successfully';
+PRINT '================================================';
+
