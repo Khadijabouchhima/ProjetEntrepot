@@ -183,44 +183,6 @@ BEGIN
 
 
     /********************************************
-     =============== DIM ROTA ====================
-    *********************************************/
-    SET @start_time = GETDATE();
-    PRINT 'Starting Gold Layer Load: dim_rota';
-    PRINT '================================================';
-
-    TRUNCATE TABLE gold.dim_rota;
-
-    INSERT INTO gold.dim_rota (
-        rota_key, rota_id, date_key, time_key,
-        shift_key, staff_key
-    )
-    SELECT
-        r.row_id,
-        r.rota_id,
-        d.date_key,
-        (
-            SELECT TOP 1 t.time_key
-            FROM gold.dim_time t
-            WHERE t.full_time >= sh.start_time
-              AND t.full_time < sh.end_time
-            ORDER BY t.full_time
-        ),
-        sh.shift_key,
-        st.staff_key
-    FROM silver.Silver_Rota r
-    JOIN gold.dim_date d ON d.full_date = r.date
-    JOIN gold.dim_shift sh ON sh.shift_id = r.shift_id
-    JOIN gold.dim_staff st ON st.staff_id = r.staff_id
-    ORDER BY r.row_id;
-
-    SET @end_time = GETDATE();
-    PRINT '>> dim_rota Load Duration: '
-        + CAST(DATEDIFF(SECOND, @start_time, @end_time) AS NVARCHAR);
-    PRINT '================================================';
-
-
-    /********************************************
      =============== FACT ORDERS =================
     *********************************************/
     SET @start_time = GETDATE();
