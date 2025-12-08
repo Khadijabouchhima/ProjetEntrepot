@@ -6,6 +6,11 @@
  Notes:         - Each section logs start/end times.
                - Each table is truncated before loading.
 **********************************************************************************************/
+-- First, create the ETL schema if it doesn't exist
+IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'etl')
+    EXEC('CREATE SCHEMA etl');
+GO
+
 CREATE OR ALTER PROCEDURE etl.Load_Gold_Layer
 AS
 BEGIN
@@ -295,6 +300,8 @@ BEGIN
         + CAST(DATEDIFF(SECOND, @start_time, @end_time) AS NVARCHAR);
     PRINT '================================================';
 
+END;
+GO
 END;
 GO
 
