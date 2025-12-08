@@ -14,6 +14,22 @@ IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'Gold')
     EXEC('CREATE SCHEMA Gold');
 GO
 
+/* =======================================================================
+   DROP TABLES IN CORRECT ORDER (Facts first, then Dimensions)
+   ======================================================================= */
+
+-- Drop fact tables first (they reference dimension tables)
+IF OBJECT_ID('Gold.fact_orders', 'U') IS NOT NULL DROP TABLE Gold.fact_orders;
+IF OBJECT_ID('Gold.fact_labor', 'U') IS NOT NULL DROP TABLE Gold.fact_labor;
+IF OBJECT_ID('Gold.fact_recipe', 'U') IS NOT NULL DROP TABLE Gold.fact_recipe;
+
+-- Then drop dimension tables
+IF OBJECT_ID('Gold.dim_date', 'U') IS NOT NULL DROP TABLE Gold.dim_date;
+IF OBJECT_ID('Gold.dim_time', 'U') IS NOT NULL DROP TABLE Gold.dim_time;
+IF OBJECT_ID('Gold.dim_items', 'U') IS NOT NULL DROP TABLE Gold.dim_items;
+IF OBJECT_ID('Gold.dim_ingredients', 'U') IS NOT NULL DROP TABLE Gold.dim_ingredients;
+IF OBJECT_ID('Gold.dim_staff', 'U') IS NOT NULL DROP TABLE Gold.dim_staff;
+IF OBJECT_ID('Gold.dim_shift', 'U') IS NOT NULL DROP TABLE Gold.dim_shift;
 
 /* =======================================================================
    DIMENSION TABLES
@@ -23,8 +39,6 @@ GO
 -- dim_date
 -- Purpose: Calendar dimension (YYYYMMDD key)
 ------------------------------------------------------------
-IF OBJECT_ID('Gold.dim_date', 'U') IS NOT NULL DROP TABLE Gold.dim_date;
-
 CREATE TABLE Gold.dim_date (
     date_key        INT PRIMARY KEY,
     full_date       DATE,
@@ -44,8 +58,6 @@ CREATE TABLE Gold.dim_date (
 -- dim_time
 -- Purpose: Time-of-day dimension (HHMMSS key)
 ------------------------------------------------------------
-IF OBJECT_ID('Gold.dim_time', 'U') IS NOT NULL DROP TABLE Gold.dim_time;
-
 CREATE TABLE Gold.dim_time (
     time_key        INT PRIMARY KEY,
     full_time       TIME,
@@ -61,8 +73,6 @@ CREATE TABLE Gold.dim_time (
 -- dim_items
 -- Purpose: Menu items sold in the coffee shop
 ------------------------------------------------------------
-IF OBJECT_ID('Gold.dim_items', 'U') IS NOT NULL DROP TABLE Gold.dim_items;
-
 CREATE TABLE Gold.dim_items (
     item_key        INT IDENTITY(1,1) PRIMARY KEY,
     item_id         VARCHAR(50),
@@ -81,8 +91,6 @@ CREATE TABLE Gold.dim_items (
 -- dim_ingredients
 -- Purpose: Ingredient catalog with weight, measurement, and cost
 ------------------------------------------------------------
-IF OBJECT_ID('Gold.dim_ingredients', 'U') IS NOT NULL DROP TABLE Gold.dim_ingredients;
-
 CREATE TABLE Gold.dim_ingredients (
     ingredient_key  INT IDENTITY(1,1) PRIMARY KEY,
     ing_id          VARCHAR(50),
@@ -98,8 +106,6 @@ CREATE TABLE Gold.dim_ingredients (
 -- dim_staff
 -- Purpose: Employee roster with roles and hourly rates
 ------------------------------------------------------------
-IF OBJECT_ID('Gold.dim_staff', 'U') IS NOT NULL DROP TABLE Gold.dim_staff;
-
 CREATE TABLE Gold.dim_staff (
     staff_key       INT IDENTITY(1,1) PRIMARY KEY,
     staff_id        VARCHAR(50),
@@ -115,8 +121,6 @@ CREATE TABLE Gold.dim_staff (
 -- dim_shift
 -- Purpose: Shift configuration storing work periods
 ------------------------------------------------------------
-IF OBJECT_ID('Gold.dim_shift', 'U') IS NOT NULL DROP TABLE Gold.dim_shift;
-
 CREATE TABLE Gold.dim_shift (
     shift_key       INT IDENTITY(1,1) PRIMARY KEY,
     shift_id        VARCHAR(50),
@@ -136,8 +140,6 @@ CREATE TABLE Gold.dim_shift (
 -- fact_orders
 -- Purpose: Sales facts containing item-level orders
 ------------------------------------------------------------
-IF OBJECT_ID('Gold.fact_orders', 'U') IS NOT NULL DROP TABLE Gold.fact_orders;
-
 CREATE TABLE Gold.fact_orders (
     order_key       INT NOT NULL,
     date_key        INT NOT NULL,
@@ -160,8 +162,6 @@ CREATE TABLE Gold.fact_orders (
 -- fact_labor
 -- Purpose: Labor cost facts based on staff and shift data
 ------------------------------------------------------------
-IF OBJECT_ID('Gold.fact_labor', 'U') IS NOT NULL DROP TABLE Gold.fact_labor;
-
 CREATE TABLE Gold.fact_labor (
     rota_key        INT IDENTITY(1,1) PRIMARY KEY,
     date_key        INT NOT NULL,
@@ -181,8 +181,6 @@ CREATE TABLE Gold.fact_labor (
 -- fact_recipe
 -- Purpose: Recipe breakdown and ingredient usage for each item
 ------------------------------------------------------------
-IF OBJECT_ID('Gold.fact_recipe', 'U') IS NOT NULL DROP TABLE Gold.fact_recipe;
-
 CREATE TABLE Gold.fact_recipe (
     recipe_key          INT IDENTITY(1,1) PRIMARY KEY,
     item_key            INT NOT NULL,
@@ -199,4 +197,3 @@ CREATE TABLE Gold.fact_recipe (
     CONSTRAINT FK_fact_recipe_item FOREIGN KEY (item_key) REFERENCES Gold.dim_items (item_key),
     CONSTRAINT FK_fact_recipe_ing  FOREIGN KEY (ingredient_key) REFERENCES Gold.dim_ingredients (ingredient_key)
 );
-
